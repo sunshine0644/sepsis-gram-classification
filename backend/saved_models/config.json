@@ -1,0 +1,23 @@
+{
+    "feature_columns": [
+        "heart_rate",
+        "sbp",
+        "resp_rate",
+        "spo2",
+        "wbc",
+        "hemoglobin",
+        "platelet",
+        "bun",
+        "pt",
+        "glucose",
+        "sodium",
+        "potassium",
+        "chloride",
+        "bicarbonate"
+    ],
+    "sequence_length": 3,
+    "label_column": "gram_type",
+    "input_dim": 14,
+    "model_name": "LightGBM",
+    "saved_time": "2026-01-28 21:14:23"
+}
