@@ -36,12 +36,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for professional look
+# Custom CSS for professional look - 改为浅蓝色配色
 st.markdown("""
 <style>
-    /* Main header */
+    /* Main header - 浅蓝色渐变 */
     .main-header {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         padding: 2rem;
         border-radius: 15px;
         color: white;
@@ -73,13 +73,13 @@ st.markdown("""
         font-weight: bold;
     }
     
-    /* Metric cards */
+    /* Metric cards - 浅蓝色左侧边框 */
     .metric-card {
         background: #f8f9fa;
         padding: 1.5rem;
         border-radius: 10px;
         text-align: center;
-        border-left: 4px solid #2a5298;
+        border-left: 4px solid #4facfe;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
@@ -92,14 +92,14 @@ st.markdown("""
     
     .metric-card .value {
         margin: 0.5rem 0 0 0;
-        color: #2a5298;
+        color: #4facfe;
         font-size: 2rem;
         font-weight: 600;
     }
     
-    /* Buttons */
+    /* Buttons - 浅蓝色渐变 */
     .stButton > button {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         color: white;
         border: none;
         padding: 0.75rem 2rem;
@@ -112,15 +112,15 @@ st.markdown("""
     
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(42, 82, 152, 0.4);
+        box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
     }
     
-    /* Info box */
+    /* Info box - 浅蓝色左侧边框 */
     .info-box {
         background-color: #e8f4fd;
         padding: 1rem;
         border-radius: 8px;
-        border-left: 4px solid #2a5298;
+        border-left: 4px solid #4facfe;
         margin: 1rem 0;
     }
     
@@ -138,11 +138,65 @@ st.markdown("""
         font-weight: 500;
     }
     
-    /* File uploader */
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background-color: #4facfe !important;
+        color: white !important;
+    }
+    
+    /* File uploader - 浅蓝色边框 */
     .uploadedFile {
-        border: 2px dashed #2a5298;
+        border: 2px dashed #4facfe;
         border-radius: 10px;
         padding: 1rem;
+    }
+    
+    /* Progress bars - 浅蓝色填充 */
+    .stProgress > div > div > div > div {
+        background-color: #4facfe !important;
+    }
+    
+    /* Radio buttons - 浅蓝色选中 */
+    .stRadio > div {
+        gap: 0.5rem;
+    }
+    
+    .stRadio [role="radiogroup"] > div {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 0.5rem;
+    }
+    
+    .stRadio [data-testid="stMarkdownContainer"] {
+        font-weight: 500;
+    }
+    
+    /* Expander - 浅蓝色边框 */
+    .streamlit-expanderHeader {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 3px solid #4facfe;
+    }
+    
+    /* Success message - 浅蓝色背景 */
+    .stAlert {
+        border-left: 4px solid #4facfe;
+    }
+    
+    /* Download button - 浅蓝色 */
+    .stDownloadButton > button {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    
+    /* Sidebar - 浅蓝色点缀 */
+    .css-1d391kg {
+        background-color: #f8f9fa;
+    }
+    
+    /* Metric labels */
+    .metric-label {
+        color: #4facfe;
+        font-weight: 600;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -159,7 +213,7 @@ if 'feature_cols' not in st.session_state:
         "sodium", "potassium", "chloride", "bicarbonate"
     ]
 
-# Header
+# Header - 浅蓝色
 st.markdown("""
 <div class="main-header">
     <h1>🦠 Gram Classification System</h1>
@@ -481,7 +535,7 @@ elif page == "📊 Batch Prediction":
                         nbins=20,
                         title='Distribution of Gram-positive Probabilities',
                         labels={'Gram_Positive_Probability': 'Probability of Gram-positive'},
-                        color_discrete_sequence=['#2a5298']
+                        color_discrete_sequence=['#4facfe']
                     )
                     fig.add_vline(x=0.5, line_dash="dash", line_color="red")
                     st.plotly_chart(fig, use_container_width=True)
@@ -625,14 +679,14 @@ else:  # About page
     If you use this tool in your research, please cite:
     @software{gram_classification_2024,
 title = {Gram Classification System for Sepsis with Bloodstream Infection},
-author = {Your Name},
+author = {Li Zeqi},
 year = {2024},
-url = {https://github.com/yourusername/sepsis-prediction-app}
+url = {https://sepsis-gram-classification.streamlit.app}
 }
 
 ### 📧 Contact
 
-For questions or collaborations, please contact the development team.
+For questions or collaborations, please contact: lizeqi0726@163.com
 """)
 
 # Footer
