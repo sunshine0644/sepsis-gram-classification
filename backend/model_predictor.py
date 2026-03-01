@@ -6,14 +6,29 @@ import pandas as pd
 import joblib
 import json
 import warnings
+import matplotlib
+matplotlib.use('Agg')  # 解决GUI问题
+import matplotlib.pyplot as plt
+import base64
+from io import BytesIO
 from pathlib import Path
+import sys
 warnings.filterwarnings('ignore')
 
 class SepsisPredictor:
     """脓毒症预测器 - 整合SHAP分析功能"""
     
-    def __init__(self, models_path='saved_models'):
-        self.models_path = Path(models_path)
+    def __init__(self, models_path=None):
+        # 获取当前文件所在目录
+        self.current_dir = Path(__file__).parent
+        
+        # 设置模型路径
+        if models_path is None:
+            # 默认使用当前目录下的 saved_models
+            self.models_path = self.current_dir / "saved_models"
+        else:
+            self.models_path = Path(models_path)
+            
         self.model = None
         self.scaler = None
         self.config = None
@@ -25,11 +40,25 @@ class SepsisPredictor:
         """加载模型和配置"""
         print("\nLoading Sepsis Prediction Model...")
         print("-" * 60)
+        print(f"Current directory: {self.current_dir}")
+        print(f"Models path: {self.models_path}")
         
         # 1. 加载配置
         config_path = self.models_path / "config.json"
         if not config_path.exists():
-            raise FileNotFoundError(f"配置文件不存在: {config_path}")
+            # 尝试上一级目录
+            alt_path = self.current_dir.parent / "saved_models" / "config.json"
+            if alt_path.exists():
+                config_path = alt_path
+                self.models_path = self.current_dir.parent / "saved_models"
+            else:
+                # 列出所有可能的位置帮助调试
+                print("Looking for config.json in:")
+                print(f"  - {config_path}")
+                print(f"  - {alt_path}")
+                print(f"  - {self.current_dir / 'config.json'}")
+                print(f"  - {self.current_dir.parent / 'config.json'}")
+                raise FileNotFoundError(f"配置文件不存在，已搜索多个位置")
         
         with open(config_path, 'r') as f:
             self.config = json.load(f)
@@ -44,9 +73,15 @@ class SepsisPredictor:
         # 2. 加载模型
         model_path = self.models_path / "LightGBM_model.pkl"
         if not model_path.exists():
-            raise FileNotFoundError(f"模型文件不存在: {model_path}")
+            # 尝试上一级目录
+            alt_path = self.current_dir.parent / "saved_models" / "LightGBM_model.pkl"
+            if alt_path.exists():
+                model_path = alt_path
+            else:
+                raise FileNotFoundError(f"模型文件不存在: {model_path}")
         
         self.model = joblib.load(model_path)
+        print(f"✓ Model loaded from: {model_path}")
         
         # 获取期望特征数
         if hasattr(self.model, 'n_features_in_'):
@@ -56,20 +91,25 @@ class SepsisPredictor:
         else:
             self.expected_features = 70
         
-        print(f"✓ Model loaded, expected features: {self.expected_features}")
+        print(f"✓ Expected features: {self.expected_features}")
         
         # 3. 加载scaler
         scaler_path = self.models_path / "scaler.pkl"
         if not scaler_path.exists():
-            raise FileNotFoundError(f"Scaler文件不存在: {scaler_path}")
+            # 尝试上一级目录
+            alt_path = self.current_dir.parent / "saved_models" / "scaler.pkl"
+            if alt_path.exists():
+                scaler_path = alt_path
+            else:
+                raise FileNotFoundError(f"Scaler文件不存在: {scaler_path}")
         
         self.scaler = joblib.load(scaler_path)
-        print("✓ Scaler loaded")
+        print(f"✓ Scaler loaded from: {scaler_path}")
         print("=" * 60)
     
     def prepare_features(self, X_3d):
         """
-        准备特征用于预测（从你的SHAP代码复制）
+        准备特征用于预测
         X_3d: shape (n_samples, 3, n_features)
         """
         n_samples = X_3d.shape[0]
@@ -136,6 +176,7 @@ class SepsisPredictor:
         input_data: DataFrame 或 数组，shape (n_samples, n_features)
         """
         if isinstance(input_data, pd.DataFrame):
+            # 确保只使用需要的特征列
             X = input_data[self.feature_cols].values
         else:
             X = np.array(input_data)
@@ -172,7 +213,7 @@ class SepsisPredictor:
     
     def predict_for_shap(self, X_flat):
         """
-        SHAP预测函数（从你的SHAP代码复制）
+        SHAP预测函数
         X_flat: shape (n_samples, 3 * n_features)
         """
         X_3d = X_flat.reshape(-1, 3, len(self.feature_cols))
@@ -218,11 +259,168 @@ class SepsisPredictor:
                 max_evals=250
             )
             
-            shap_values = explainer(X_flat, silent=True)
+            shap_values = explainer(X_flat, silent=False)
             return shap_values
             
         except Exception as e:
-            print(f"  SHAP computation failed: {e}")
+            print(f"  PermutationExplainer failed: {e}")
+            print("  Falling back to KernelExplainer...")
+            
+            try:
+                explainer = shap.KernelExplainer(
+                    self.predict_for_shap,
+                    background,
+                    link="identity"
+                )
+                
+                shap_values_raw = explainer.shap_values(
+                    X_flat,
+                    nsamples=150,
+                    silent=True
+                )
+                
+                if isinstance(shap_values_raw, list):
+                    shap_values_raw = shap_values_raw[1] if len(shap_values_raw) > 1 else shap_values_raw[0]
+                
+                shap_values = shap.Explanation(
+                    values=shap_values_raw,
+                    base_values=explainer.expected_value,
+                    data=X_flat
+                )
+                
+                return shap_values
+                
+            except Exception as e2:
+                print(f"  All explainers failed: {e2}")
+                return None
+    
+    def generate_beeswarm_plot(self, shap_values, max_display=15):
+        """
+        生成蜂群图的base64编码
+        """
+        try:
+            fig, ax = plt.subplots(figsize=(12, 8))
+            
+            shap.summary_plot(
+                shap_values.values,
+                shap_values.data,
+                feature_names=self.feature_cols,
+                show=False,
+                max_display=max_display,
+                plot_type="dot",
+                alpha=0.6
+            )
+            
+            plt.tight_layout()
+            
+            # 转换为base64
+            buf = BytesIO()
+            plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+            plt.close()
+            buf.seek(0)
+            
+            return base64.b64encode(buf.read()).decode('utf-8')
+            
+        except Exception as e:
+            print(f"Error generating beeswarm plot: {e}")
+            return None
+    
+    def generate_bar_plot(self, shap_values, max_display=15):
+        """
+        生成条形图的base64编码
+        """
+        try:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            
+            shap.summary_plot(
+                shap_values.values,
+                shap_values.data,
+                feature_names=self.feature_cols,
+                show=False,
+                plot_type="bar",
+                max_display=max_display
+            )
+            
+            plt.tight_layout()
+            
+            buf = BytesIO()
+            plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+            plt.close()
+            buf.seek(0)
+            
+            return base64.b64encode(buf.read()).decode('utf-8')
+            
+        except Exception as e:
+            print(f"Error generating bar plot: {e}")
+            return None
+    
+    def generate_waterfall_plot(self, shap_values, case_idx=0, period_idx=0):
+        """
+        为特定病例和时间段生成瀑布图
+        """
+        try:
+            # 获取该病例的SHAP值
+            if len(shap_values.values.shape) == 2:
+                # 已经是2D
+                shap_values_case = shap_values.values[case_idx]
+            else:
+                # 需要重塑
+                n_features = len(self.feature_cols)
+                shap_3d = shap_values.values.reshape(-1, 3, n_features)
+                shap_values_case = shap_3d[case_idx, period_idx, :]
+            
+            # 获取特征值
+            if hasattr(shap_values, 'data'):
+                if len(shap_values.data.shape) == 2:
+                    feature_values = shap_values.data[case_idx]
+                else:
+                    feature_3d = shap_values.data.reshape(-1, 3, n_features)
+                    feature_values = feature_3d[case_idx, period_idx, :]
+            else:
+                feature_values = np.zeros(len(self.feature_cols))
+            
+            # 获取基准值
+            if hasattr(shap_values, 'base_values'):
+                base_value = shap_values.base_values[0] if isinstance(shap_values.base_values, (list, np.ndarray)) else shap_values.base_values
+            else:
+                base_value = 0.5
+            
+            # 创建特征名称列表（包含特征值）
+            feature_names_with_values = []
+            for j in range(len(self.feature_cols)):
+                feat_name = self.feature_cols[j]
+                feat_value = feature_values[j]
+                feature_names_with_values.append(f"{feat_name} = {feat_value:.2f}")
+            
+            # 创建Explanation对象
+            explanation = shap.Explanation(
+                values=shap_values_case,
+                base_values=base_value,
+                data=feature_values,
+                feature_names=feature_names_with_values
+            )
+            
+            # 绘制瀑布图
+            fig, ax = plt.subplots(figsize=(12, 6))
+            
+            shap.waterfall_plot(
+                explanation,
+                max_display=10,
+                show=False
+            )
+            
+            plt.tight_layout()
+            
+            # 转换为base64
+            buf = BytesIO()
+            plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+            plt.close()
+            buf.seek(0)
+            
+            return base64.b64encode(buf.read()).decode('utf-8')
+            
+        except Exception as e:
+            print(f"Error generating waterfall plot: {e}")
             return None
     
     def get_feature_importance(self):
@@ -246,6 +444,71 @@ class SepsisPredictor:
             else:
                 return dict(zip(self.feature_cols[:len(importance)], importance))
         return None
+    
+    def get_global_shap_analysis(self, sample_data, n_background=100):
+        """
+        获取全局SHAP分析（蜂群图和条形图）
+        sample_data: 3D数组 shape (n_samples, 3, n_features)
+        """
+        # 计算SHAP值
+        shap_values = self.compute_shap_values(sample_data, n_background)
+        
+        if shap_values is None:
+            return None
+        
+        # 生成图表
+        beeswarm = self.generate_beeswarm_plot(shap_values)
+        bar = self.generate_bar_plot(shap_values)
+        
+        # 计算每个样本的预测概率
+        probas = self.predict_temporal(sample_data)
+        
+        return {
+            'beeswarm': beeswarm,
+            'bar': bar,
+            'shap_summary': {
+                'mean_abs_shap': np.mean(np.abs(shap_values.values), axis=0).tolist(),
+                'feature_names': self.feature_cols
+            },
+            'predictions': probas.tolist()
+        }
+    
+    def get_case_waterfall(self, sample_data, case_idx=0, period_idx=0):
+        """
+        获取单个病例的瀑布图
+        sample_data: 3D数组 shape (n_samples, 3, n_features)
+        """
+        # 计算SHAP值
+        shap_values = self.compute_shap_values(sample_data, n_background=50)
+        
+        if shap_values is None:
+            return None
+        
+        # 生成瀑布图
+        waterfall = self.generate_waterfall_plot(shap_values, case_idx, period_idx)
+        
+        # 预测概率
+        proba = self.predict_temporal(sample_data)[case_idx]
+        
+        return {
+            'waterfall': waterfall,
+            'probability': float(proba),
+            'base_value': float(shap_values.base_values[0] if hasattr(shap_values, 'base_values') else 0.5),
+            'feature_names': self.feature_cols
+        }
 
-# 创建单例
-predictor = SepsisPredictor()
+
+# 创建单例 - 使用绝对路径
+try:
+    # 获取当前文件所在目录
+    current_file = Path(__file__).resolve()
+    current_dir = current_file.parent
+    models_dir = current_dir / "saved_models"
+    
+    print(f"Initializing predictor with models from: {models_dir}")
+    predictor = SepsisPredictor(models_path=str(models_dir))
+except Exception as e:
+    print(f"Error initializing predictor: {e}")
+    # 如果失败，尝试相对路径
+    print("Trying relative path...")
+    predictor = SepsisPredictor()
