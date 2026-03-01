@@ -36,15 +36,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for dark blue theme with white text
+# Custom CSS - 只修改标题颜色为深蓝色底白色字
 st.markdown("""
 <style>
-    /* 全局深蓝色背景 */
-    .stApp {
-        background-color: #0a1929;
-    }
-    
-    /* 主标题 - 深蓝色渐变 */
+    /* Main header - 深蓝色底白色字 */
     .main-header {
         background: linear-gradient(135deg, #0a1929 0%, #1a2b3c 100%);
         padding: 2rem;
@@ -52,8 +47,7 @@ st.markdown("""
         color: white;
         margin-bottom: 2rem;
         text-align: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        border: 1px solid #2a3b4c;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
     .main-header h1 {
@@ -64,67 +58,56 @@ st.markdown("""
         color: #e0e0e0 !important;
     }
     
-    /* 所有文本颜色 */
-    h1, h2, h3, h4, h5, h6, p, li, .stMarkdown, .stText {
-        color: white !important;
-    }
-    
-    /* 卡片样式 - 深色背景 */
+    /* 其他所有样式保持原样 */
     .prediction-card {
-        background: #1e2a3a;
+        background: white;
         padding: 2rem;
         border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         text-align: center;
         margin: 1rem 0;
-        border: 1px solid #2a3b4c;
-    }
-    
-    .prediction-card h3 {
-        color: white !important;
+        border: 1px solid #e9ecef;
     }
     
     .gram-positive {
-        color: #ff6b6b;
+        color: #dc3545;
         font-size: 3rem;
         font-weight: bold;
     }
     
     .gram-negative {
-        color: #51cf66;
+        color: #28a745;
         font-size: 3rem;
         font-weight: bold;
     }
     
-    /* Metric cards */
     .metric-card {
-        background: #1e2a3a;
+        background: #f8f9fa;
         padding: 1.5rem;
         border-radius: 10px;
         text-align: center;
-        border-left: 4px solid #4dabf7;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        border-left: 4px solid #2a5298;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
     .metric-card h3 {
         margin: 0;
-        color: #e0e0e0 !important;
+        color: #495057;
         font-size: 1rem;
         font-weight: 500;
     }
     
     .metric-card .value {
         margin: 0.5rem 0 0 0;
-        color: #4dabf7;
+        color: #2a5298;
         font-size: 2rem;
         font-weight: 600;
     }
     
-    /* Buttons */
     .stButton > button {
-        background: #1e2a3a;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         color: white;
-        border: 1px solid #4dabf7;
+        border: none;
         padding: 0.75rem 2rem;
         font-size: 1.1rem;
         font-weight: 500;
@@ -134,172 +117,34 @@ st.markdown("""
     }
     
     .stButton > button:hover {
-        background: #2a3b4c;
-        border-color: #74c0fc;
-        color: white;
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(77, 171, 247, 0.3);
+        box-shadow: 0 4px 12px rgba(42, 82, 152, 0.4);
     }
     
-    /* Info box */
     .info-box {
-        background-color: #1e2a3a;
+        background-color: #e8f4fd;
         padding: 1rem;
         border-radius: 8px;
-        border-left: 4px solid #4dabf7;
+        border-left: 4px solid #2a5298;
         margin: 1rem 0;
-        color: #e0e0e0;
     }
     
-    .info-box strong {
-        color: white;
-    }
-    
-    /* Tabs */
     .stTabs [data-baseweb="tab-list"] {
         gap: 1rem;
-        background-color: #1e2a3a;
+        background-color: #f8f9fa;
         padding: 0.5rem;
         border-radius: 10px;
-        border: 1px solid #2a3b4c;
     }
     
     .stTabs [data-baseweb="tab"] {
         border-radius: 8px;
         padding: 0.5rem 1rem;
         font-weight: 500;
-        color: #e0e0e0 !important;
     }
     
-    .stTabs [data-baseweb="tab"][aria-selected="true"] {
-        background-color: #2a3b4c !important;
-        color: white !important;
-        border: 1px solid #4dabf7;
-    }
-    
-    /* File uploader */
     .uploadedFile {
-        border: 2px dashed #4dabf7;
+        border: 2px dashed #2a5298;
         border-radius: 10px;
-        padding: 1rem;
-        background-color: #1e2a3a;
-    }
-    
-    /* Progress bars */
-    .stProgress > div > div > div > div {
-        background-color: #4dabf7 !important;
-    }
-    
-    /* Radio buttons */
-    .stRadio > div {
-        gap: 0.5rem;
-    }
-    
-    .stRadio [role="radiogroup"] > div {
-        background-color: #1e2a3a;
-        border-radius: 8px;
-        padding: 0.5rem;
-        border: 1px solid #2a3b4c;
-    }
-    
-    .stRadio [data-testid="stMarkdownContainer"] {
-        color: #e0e0e0 !important;
-        font-weight: 500;
-    }
-    
-    /* Expander */
-    .streamlit-expanderHeader {
-        background-color: #1e2a3a;
-        border-radius: 8px;
-        border-left: 3px solid #4dabf7;
-        color: white !important;
-    }
-    
-    .streamlit-expanderContent {
-        background-color: #1e2a3a;
-        border: 1px solid #2a3b4c;
-        border-radius: 0 0 8px 8px;
-    }
-    
-    /* Success/Error messages */
-    .stAlert {
-        background-color: #1e2a3a !important;
-        border-left: 4px solid #4dabf7;
-        color: #e0e0e0 !important;
-    }
-    
-    /* Download button */
-    .stDownloadButton > button {
-        background: #1e2a3a;
-        color: white;
-        border: 1px solid #4dabf7;
-    }
-    
-    .stDownloadButton > button:hover {
-        background: #2a3b4c;
-    }
-    
-    /* Sidebar */
-    .css-1d391kg {
-        background-color: #0a1929 !important;
-    }
-    
-    .sidebar .sidebar-content {
-        background-color: #0a1929;
-    }
-    
-    /* Input fields */
-    .stTextInput > div > div > input,
-    .stNumberInput > div > div > input,
-    .stSelectbox > div > div > select {
-        background-color: #1e2a3a;
-        color: white;
-        border: 1px solid #2a3b4c;
-        border-radius: 8px;
-    }
-    
-    .stTextInput > div > div > input:focus,
-    .stNumberInput > div > div > input:focus,
-    .stSelectbox > div > div > select:focus {
-        border-color: #4dabf7;
-    }
-    
-    /* Labels */
-    label {
-        color: #e0e0e0 !important;
-    }
-    
-    /* Dataframes */
-    .stDataFrame {
-        background-color: #1e2a3a;
-        color: white;
-    }
-    
-    .stDataFrame th {
-        background-color: #2a3b4c;
-        color: white;
-    }
-    
-    .stDataFrame td {
-        background-color: #1e2a3a;
-        color: #e0e0e0;
-    }
-    
-    /* Metric labels */
-    .metric-label {
-        color: #4dabf7;
-        font-weight: 600;
-    }
-    
-    /* Plot backgrounds */
-    .js-plotly-plot .plotly {
-        background-color: #1e2a3a !important;
-    }
-    
-    /* Footer */
-    .footer {
-        color: #6c757d;
-        text-align: center;
         padding: 1rem;
     }
 </style>
@@ -317,7 +162,7 @@ if 'feature_cols' not in st.session_state:
         "sodium", "potassium", "chloride", "bicarbonate"
     ]
 
-# Header - 深蓝色渐变
+# Header - 深蓝色底白色字
 st.markdown("""
 <div class="main-header">
     <h1>🦠 Gram Classification System</h1>
@@ -486,19 +331,19 @@ def display_prediction(probability):
         if probability > 0.5:
             st.markdown(f"""
             <div class="prediction-card">
-                <h3 style="color: #ff6b6b;">Gram-positive</h3>
+                <h3 style="color: #dc3545;">Gram-positive</h3>
                 <div class="gram-positive">{probability:.1%}</div>
-                <p style="color: #adb5bd;">Probability of Gram-positive</p>
-                <p style="color: #51cf66;">Gram-negative: {(1-probability):.1%}</p>
+                <p style="color: #6c757d;">Probability of Gram-positive</p>
+                <p style="color: #28a745;">Gram-negative: {(1-probability):.1%}</p>
             </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown(f"""
             <div class="prediction-card">
-                <h3 style="color: #51cf66;">Gram-negative</h3>
+                <h3 style="color: #28a745;">Gram-negative</h3>
                 <div class="gram-negative">{(1-probability):.1%}</div>
-                <p style="color: #adb5bd;">Probability of Gram-negative</p>
-                <p style="color: #ff6b6b;">Gram-positive: {probability:.1%}</p>
+                <p style="color: #6c757d;">Probability of Gram-negative</p>
+                <p style="color: #dc3545;">Gram-positive: {probability:.1%}</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -550,12 +395,7 @@ if page == "🎯 Single Prediction":
                         color='Importance',
                         color_continuous_scale='Blues'
                     )
-                    fig.update_layout(
-                        height=400,
-                        paper_bgcolor='#1e2a3a',
-                        plot_bgcolor='#1e2a3a',
-                        font_color='white'
-                    )
+                    fig.update_layout(height=400)
                     st.plotly_chart(fig, use_container_width=True)
                     
             except Exception as e:
@@ -644,14 +484,9 @@ elif page == "📊 Batch Prediction":
                         nbins=20,
                         title='Distribution of Gram-positive Probabilities',
                         labels={'Gram_Positive_Probability': 'Probability of Gram-positive'},
-                        color_discrete_sequence=['#4dabf7']
+                        color_discrete_sequence=['#2a5298']
                     )
                     fig.add_vline(x=0.5, line_dash="dash", line_color="red")
-                    fig.update_layout(
-                        paper_bgcolor='#1e2a3a',
-                        plot_bgcolor='#1e2a3a',
-                        font_color='white'
-                    )
                     st.plotly_chart(fig, use_container_width=True)
                     
                     # Download button
