@@ -174,6 +174,7 @@ class SepsisPredictor:
         """
         单时间点预测
         input_data: DataFrame 或 数组，shape (n_samples, n_features)
+        注意：为了匹配模型，会将单个时间点复制成3个时间点
         """
         if isinstance(input_data, pd.DataFrame):
             # 确保只使用需要的特征列
@@ -181,15 +182,31 @@ class SepsisPredictor:
         else:
             X = np.array(input_data)
         
+        # 确保输入是2D数组
+        if len(X.shape) == 1:
+            X = X.reshape(1, -1)
+        
+        print(f"predict_single - Input shape: {X.shape}")
+        
         # 标准化
         X_scaled = self.scaler.transform(X)
         
+        # 将单个时间点复制成3个时间点，形成3D数组
+        n_samples = X_scaled.shape[0]
+        # 创建3D数组: (n_samples, 3, n_features)
+        X_3d = np.array([X_scaled] * 3).transpose(1, 0, 2)
+        print(f"predict_single - 3D shape: {X_3d.shape}")
+        
+        # 准备特征（从3D到70/84个统计特征）
+        features = self.prepare_features(X_3d)
+        print(f"predict_single - Features shape: {features.shape}, Expected: {self.expected_features}")
+        
         # 预测
         if hasattr(self.model, 'predict_proba'):
-            proba = self.model.predict_proba(X_scaled)
+            proba = self.model.predict_proba(features)
             return proba[:, 1] if proba.shape[1] == 2 else proba[:, -1]
         else:
-            return self.model.predict(X_scaled)
+            return self.model.predict(features)
     
     def predict_temporal(self, X_3d):
         """
