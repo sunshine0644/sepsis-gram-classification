@@ -1,4 +1,4 @@
-# streamlit_app.py
+# streamlit_app.py - 修复版，支持三个时间点，key全局唯一
 
 import streamlit as st
 import pandas as pd
@@ -235,9 +235,9 @@ feature_descriptions = {
     "bicarbonate": "Bicarbonate (mmol/L)"
 }
 
-# 修改后的函数：为特定时间点创建输入字段
+# 修复后的函数：为特定时间点创建输入字段，使用全局唯一的key
 def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
-    """为特定时间点创建输入字段"""
+    """为特定时间点创建输入字段 - 使用全局唯一的key"""
     if default_values is None:
         default_values = {
             "heart_rate": 80, "sbp": 120, "resp_rate": 16, "spo2": 98,
@@ -245,6 +245,10 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
             "bun": 15.0, "pt": 12.0, "glucose": 100,
             "sodium": 140, "potassium": 4.0, "chloride": 102, "bicarbonate": 24
         }
+    
+    # 生成一个简短的时间点标识符，用于key
+    # 将 "Period 3 (0-8h)" 转换为 "Period3_0-8h"
+    period_key = timepoint_name.replace(" ", "_").replace("(", "").replace(")", "")
     
     col1, col2 = st.columns(2)
     values = {}
@@ -254,25 +258,25 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
         values["heart_rate"] = st.number_input(
             f"Heart Rate (bpm) - {timepoint_name}", 
             min_value=0, max_value=300, value=default_values["heart_rate"], step=1,
-            key=f"hr_{timepoint_idx}",
+            key=f"hr_{period_key}_{timepoint_idx}",
             help=feature_descriptions["heart_rate"]
         )
         values["sbp"] = st.number_input(
             f"SBP (mmHg) - {timepoint_name}", 
             min_value=0, max_value=300, value=default_values["sbp"], step=1,
-            key=f"sbp_{timepoint_idx}",
+            key=f"sbp_{period_key}_{timepoint_idx}",
             help=feature_descriptions["sbp"]
         )
         values["resp_rate"] = st.number_input(
             f"Respiratory Rate (breaths/min) - {timepoint_name}", 
             min_value=0, max_value=100, value=default_values["resp_rate"], step=1,
-            key=f"rr_{timepoint_idx}",
+            key=f"rr_{period_key}_{timepoint_idx}",
             help=feature_descriptions["resp_rate"]
         )
         values["spo2"] = st.number_input(
             f"SpO₂ (%) - {timepoint_name}", 
             min_value=0, max_value=100, value=default_values["spo2"], step=1,
-            key=f"spo2_{timepoint_idx}",
+            key=f"spo2_{period_key}_{timepoint_idx}",
             help=feature_descriptions["spo2"]
         )
         
@@ -280,19 +284,19 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
         values["wbc"] = st.number_input(
             f"WBC (10⁹/L) - {timepoint_name}", 
             min_value=0.0, max_value=100.0, value=default_values["wbc"], step=0.1,
-            key=f"wbc_{timepoint_idx}",
+            key=f"wbc_{period_key}_{timepoint_idx}",
             help=feature_descriptions["wbc"]
         )
         values["hemoglobin"] = st.number_input(
             f"Hemoglobin (g/dL) - {timepoint_name}", 
             min_value=0.0, max_value=20.0, value=default_values["hemoglobin"], step=0.1,
-            key=f"hgb_{timepoint_idx}",
+            key=f"hgb_{period_key}_{timepoint_idx}",
             help=feature_descriptions["hemoglobin"]
         )
         values["platelet"] = st.number_input(
             f"Platelet (10⁹/L) - {timepoint_name}", 
             min_value=0, max_value=1000, value=default_values["platelet"], step=1,
-            key=f"plt_{timepoint_idx}",
+            key=f"plt_{period_key}_{timepoint_idx}",
             help=feature_descriptions["platelet"]
         )
     
@@ -301,19 +305,19 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
         values["bun"] = st.number_input(
             f"BUN (mg/dL) - {timepoint_name}", 
             min_value=0.0, max_value=100.0, value=default_values["bun"], step=0.1,
-            key=f"bun_{timepoint_idx}",
+            key=f"bun_{period_key}_{timepoint_idx}",
             help=feature_descriptions["bun"]
         )
         values["pt"] = st.number_input(
             f"PT (seconds) - {timepoint_name}", 
             min_value=0.0, max_value=100.0, value=default_values["pt"], step=0.1,
-            key=f"pt_{timepoint_idx}",
+            key=f"pt_{period_key}_{timepoint_idx}",
             help=feature_descriptions["pt"]
         )
         values["glucose"] = st.number_input(
             f"Glucose (mg/dL) - {timepoint_name}", 
             min_value=0, max_value=500, value=default_values["glucose"], step=1,
-            key=f"glu_{timepoint_idx}",
+            key=f"glu_{period_key}_{timepoint_idx}",
             help=feature_descriptions["glucose"]
         )
         
@@ -321,25 +325,25 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
         values["sodium"] = st.number_input(
             f"Sodium (mmol/L) - {timepoint_name}", 
             min_value=100, max_value=160, value=default_values["sodium"], step=1,
-            key=f"na_{timepoint_idx}",
+            key=f"na_{period_key}_{timepoint_idx}",
             help=feature_descriptions["sodium"]
         )
         values["potassium"] = st.number_input(
             f"Potassium (mmol/L) - {timepoint_name}", 
             min_value=2.0, max_value=8.0, value=default_values["potassium"], step=0.1,
-            key=f"k_{timepoint_idx}",
+            key=f"k_{period_key}_{timepoint_idx}",
             help=feature_descriptions["potassium"]
         )
         values["chloride"] = st.number_input(
             f"Chloride (mmol/L) - {timepoint_name}", 
             min_value=80, max_value=120, value=default_values["chloride"], step=1,
-            key=f"cl_{timepoint_idx}",
+            key=f"cl_{period_key}_{timepoint_idx}",
             help=feature_descriptions["chloride"]
         )
         values["bicarbonate"] = st.number_input(
             f"Bicarbonate (mmol/L) - {timepoint_name}", 
             min_value=10, max_value=40, value=default_values["bicarbonate"], step=1,
-            key=f"hco3_{timepoint_idx}",
+            key=f"hco3_{period_key}_{timepoint_idx}",
             help=feature_descriptions["bicarbonate"]
         )
     
@@ -446,22 +450,36 @@ if page == "🎯 Single Patient (3 Time Points)":
                 # Display result
                 display_prediction(probability)
                 
-                # 显示时间序列趋势
-                st.subheader("📈 Temporal Trends")
+                # 显示时间序列趋势 - 显示所有特征
+                st.subheader("📈 Temporal Trends - All Features")
                 
-                # 创建趋势图数据
-                trend_data = []
-                for feature in ['wbc', 'heart_rate', 'resp_rate']:
-                    values = [timepoint_data[i][feature] for i in range(3)]
-                    trend_data.append({
-                        'Feature': feature,
-                        'Period 3 (0-8h)': values[0],
-                        'Period 2 (8-16h)': values[1],
-                        'Period 1 (16-24h)': values[2]
-                    })
+                # 创建包含所有特征的趋势数据框
+                trend_data = {'Period': ['0-8h', '8-16h', '16-24h']}
+                display_names = {
+                    'heart_rate': 'Heart Rate', 'sbp': 'SBP', 'resp_rate': 'Resp Rate',
+                    'spo2': 'SpO2', 'wbc': 'WBC', 'hemoglobin': 'HGB',
+                    'platelet': 'PLT', 'bun': 'BUN', 'pt': 'PT',
+                    'glucose': 'Glu', 'sodium': 'Na', 'potassium': 'K',
+                    'chloride': 'Cl', 'bicarbonate': 'HCO3'
+                }
+                
+                for feat in st.session_state.feature_cols:
+                    display_name = display_names.get(feat, feat)
+                    trend_data[display_name] = [
+                        timepoint_data[i][feat] for i in range(3)
+                    ]
                 
                 trend_df = pd.DataFrame(trend_data)
-                st.dataframe(trend_df, use_container_width=True)
+                trend_display = trend_df.set_index('Period')
+                st.dataframe(trend_display, use_container_width=True)
+                
+                # 显示关键特征的折线图
+                st.subheader("📈 Key Trends Chart")
+                key_features = ['Heart Rate', 'WBC', 'SBP', 'Resp Rate']
+                available_keys = [k for k in key_features if k in trend_display.columns]
+                if available_keys:
+                    chart_df = trend_display[available_keys]
+                    st.line_chart(chart_df)
                 
                 # Feature importance
                 st.subheader("📈 Feature Contributions")
@@ -486,6 +504,7 @@ if page == "🎯 Single Patient (3 Time Points)":
                     
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
+                st.exception(e)  # 显示详细错误信息
         else:
             st.error("Model not loaded. Please refresh the page.")
 
@@ -737,11 +756,11 @@ else:  # About page
     ### 📝 Citation
     
     If you use this tool in your research, please cite:
-    @software{gram_classification_2024,
+    @software{gram_classification_2026,
 title = {Gram Classification System for Sepsis with Bloodstream Infection},
 author = {Li Zeqi},
-year = {2024},
-url = {https://sepsis-gram-classification.streamlit.app}
+year = {2026},
+url = {https://www.sepsis-bsi-gram.cn}
 }
 
 ### 📧 Contact
