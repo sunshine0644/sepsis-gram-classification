@@ -36,7 +36,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS - 只修改标题颜色为深蓝色底白色字
+# Custom CSS
 st.markdown("""
 <style>
     /* Main header - 深蓝色底白色字 */
@@ -58,7 +58,6 @@ st.markdown("""
         color: #e0e0e0 !important;
     }
     
-    /* 其他所有样式保持原样 */
     .prediction-card {
         background: white;
         padding: 2rem;
@@ -147,6 +146,20 @@ st.markdown("""
         border-radius: 10px;
         padding: 1rem;
     }
+    
+    /* 时间点标签页样式 */
+    .timepoint-tab {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    /* 时间点摘要卡片 */
+    .period-summary {
+        background: #f0f2f6;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 0.5rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -162,7 +175,7 @@ if 'feature_cols' not in st.session_state:
         "sodium", "potassium", "chloride", "bicarbonate"
     ]
 
-# Header - 深蓝色底白色字
+# Header
 st.markdown("""
 <div class="main-header">
     <h1>🦠 Gram Classification System</h1>
@@ -193,13 +206,14 @@ with st.sidebar:
             - **Model**: LightGBM Classifier
             - **Task**: Gram Classification
             - **Output**: Probability (Gram-positive)
+            - **Time Points**: 3 periods (0-8h, 8-16h, 16-24h)
             """)
     
     # Navigation
     st.markdown("## 🧭 Navigation")
     page = st.radio(
         "Select Function",
-        ["🎯 Single Prediction", "📊 Batch Prediction", "📋 Sample Cases", "ℹ️ About"],
+        ["🎯 Single Patient (3 Time Points)", "📊 Batch Prediction", "📋 Sample Cases", "ℹ️ About"],
         label_visibility="collapsed"
     )
 
@@ -221,107 +235,115 @@ feature_descriptions = {
     "bicarbonate": "Bicarbonate (mmol/L)"
 }
 
-# Helper function to create feature input
-def create_feature_inputs():
-    """Create input fields for all features"""
+# 修改后的函数：为特定时间点创建输入字段
+def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
+    """为特定时间点创建输入字段"""
+    if default_values is None:
+        default_values = {
+            "heart_rate": 80, "sbp": 120, "resp_rate": 16, "spo2": 98,
+            "wbc": 8.5, "hemoglobin": 13.5, "platelet": 250,
+            "bun": 15.0, "pt": 12.0, "glucose": 100,
+            "sodium": 140, "potassium": 4.0, "chloride": 102, "bicarbonate": 24
+        }
+    
     col1, col2 = st.columns(2)
+    values = {}
     
     with col1:
-        st.markdown("#### Vital Signs")
-        heart_rate = st.number_input(
-            "Heart Rate (bpm)", 
-            min_value=0, max_value=300, value=80, step=1,
+        st.markdown("##### Vital Signs")
+        values["heart_rate"] = st.number_input(
+            f"Heart Rate (bpm) - {timepoint_name}", 
+            min_value=0, max_value=300, value=default_values["heart_rate"], step=1,
+            key=f"hr_{timepoint_idx}",
             help=feature_descriptions["heart_rate"]
         )
-        sbp = st.number_input(
-            "SBP (mmHg)", 
-            min_value=0, max_value=300, value=120, step=1,
+        values["sbp"] = st.number_input(
+            f"SBP (mmHg) - {timepoint_name}", 
+            min_value=0, max_value=300, value=default_values["sbp"], step=1,
+            key=f"sbp_{timepoint_idx}",
             help=feature_descriptions["sbp"]
         )
-        resp_rate = st.number_input(
-            "Respiratory Rate (breaths/min)", 
-            min_value=0, max_value=100, value=16, step=1,
+        values["resp_rate"] = st.number_input(
+            f"Respiratory Rate (breaths/min) - {timepoint_name}", 
+            min_value=0, max_value=100, value=default_values["resp_rate"], step=1,
+            key=f"rr_{timepoint_idx}",
             help=feature_descriptions["resp_rate"]
         )
-        spo2 = st.number_input(
-            "SpO₂ (%)", 
-            min_value=0, max_value=100, value=98, step=1,
+        values["spo2"] = st.number_input(
+            f"SpO₂ (%) - {timepoint_name}", 
+            min_value=0, max_value=100, value=default_values["spo2"], step=1,
+            key=f"spo2_{timepoint_idx}",
             help=feature_descriptions["spo2"]
         )
         
-        st.markdown("#### Laboratory - Blood Count")
-        wbc = st.number_input(
-            "WBC (10⁹/L)", 
-            min_value=0.0, max_value=100.0, value=8.5, step=0.1,
+        st.markdown("##### Blood Count")
+        values["wbc"] = st.number_input(
+            f"WBC (10⁹/L) - {timepoint_name}", 
+            min_value=0.0, max_value=100.0, value=default_values["wbc"], step=0.1,
+            key=f"wbc_{timepoint_idx}",
             help=feature_descriptions["wbc"]
         )
-        hemoglobin = st.number_input(
-            "Hemoglobin (g/dL)", 
-            min_value=0.0, max_value=20.0, value=13.5, step=0.1,
+        values["hemoglobin"] = st.number_input(
+            f"Hemoglobin (g/dL) - {timepoint_name}", 
+            min_value=0.0, max_value=20.0, value=default_values["hemoglobin"], step=0.1,
+            key=f"hgb_{timepoint_idx}",
             help=feature_descriptions["hemoglobin"]
         )
-        platelet = st.number_input(
-            "Platelet (10⁹/L)", 
-            min_value=0, max_value=1000, value=250, step=1,
+        values["platelet"] = st.number_input(
+            f"Platelet (10⁹/L) - {timepoint_name}", 
+            min_value=0, max_value=1000, value=default_values["platelet"], step=1,
+            key=f"plt_{timepoint_idx}",
             help=feature_descriptions["platelet"]
         )
     
     with col2:
-        st.markdown("#### Laboratory - Chemistry")
-        bun = st.number_input(
-            "BUN (mg/dL)", 
-            min_value=0.0, max_value=100.0, value=15.0, step=0.1,
+        st.markdown("##### Chemistry")
+        values["bun"] = st.number_input(
+            f"BUN (mg/dL) - {timepoint_name}", 
+            min_value=0.0, max_value=100.0, value=default_values["bun"], step=0.1,
+            key=f"bun_{timepoint_idx}",
             help=feature_descriptions["bun"]
         )
-        pt = st.number_input(
-            "PT (seconds)", 
-            min_value=0.0, max_value=100.0, value=12.0, step=0.1,
+        values["pt"] = st.number_input(
+            f"PT (seconds) - {timepoint_name}", 
+            min_value=0.0, max_value=100.0, value=default_values["pt"], step=0.1,
+            key=f"pt_{timepoint_idx}",
             help=feature_descriptions["pt"]
         )
-        glucose = st.number_input(
-            "Glucose (mg/dL)", 
-            min_value=0, max_value=500, value=100, step=1,
+        values["glucose"] = st.number_input(
+            f"Glucose (mg/dL) - {timepoint_name}", 
+            min_value=0, max_value=500, value=default_values["glucose"], step=1,
+            key=f"glu_{timepoint_idx}",
             help=feature_descriptions["glucose"]
         )
         
-        st.markdown("#### Electrolytes")
-        sodium = st.number_input(
-            "Sodium (mmol/L)", 
-            min_value=100, max_value=160, value=140, step=1,
+        st.markdown("##### Electrolytes")
+        values["sodium"] = st.number_input(
+            f"Sodium (mmol/L) - {timepoint_name}", 
+            min_value=100, max_value=160, value=default_values["sodium"], step=1,
+            key=f"na_{timepoint_idx}",
             help=feature_descriptions["sodium"]
         )
-        potassium = st.number_input(
-            "Potassium (mmol/L)", 
-            min_value=2.0, max_value=8.0, value=4.0, step=0.1,
+        values["potassium"] = st.number_input(
+            f"Potassium (mmol/L) - {timepoint_name}", 
+            min_value=2.0, max_value=8.0, value=default_values["potassium"], step=0.1,
+            key=f"k_{timepoint_idx}",
             help=feature_descriptions["potassium"]
         )
-        chloride = st.number_input(
-            "Chloride (mmol/L)", 
-            min_value=80, max_value=120, value=102, step=1,
+        values["chloride"] = st.number_input(
+            f"Chloride (mmol/L) - {timepoint_name}", 
+            min_value=80, max_value=120, value=default_values["chloride"], step=1,
+            key=f"cl_{timepoint_idx}",
             help=feature_descriptions["chloride"]
         )
-        bicarbonate = st.number_input(
-            "Bicarbonate (mmol/L)", 
-            min_value=10, max_value=40, value=24, step=1,
+        values["bicarbonate"] = st.number_input(
+            f"Bicarbonate (mmol/L) - {timepoint_name}", 
+            min_value=10, max_value=40, value=default_values["bicarbonate"], step=1,
+            key=f"hco3_{timepoint_idx}",
             help=feature_descriptions["bicarbonate"]
         )
     
-    return {
-        "heart_rate": heart_rate,
-        "sbp": sbp,
-        "resp_rate": resp_rate,
-        "spo2": spo2,
-        "wbc": wbc,
-        "hemoglobin": hemoglobin,
-        "platelet": platelet,
-        "bun": bun,
-        "pt": pt,
-        "glucose": glucose,
-        "sodium": sodium,
-        "potassium": potassium,
-        "chloride": chloride,
-        "bicarbonate": bicarbonate
-    }
+    return values
 
 # Helper function to display prediction result
 def display_prediction(probability):
@@ -348,28 +370,75 @@ def display_prediction(probability):
             """, unsafe_allow_html=True)
 
 # Main content based on selected page
-if page == "🎯 Single Prediction":
-    st.header("🎯 Single Patient Prediction")
+if page == "🎯 Single Patient (3 Time Points)":
+    st.header("🎯 Single Patient Prediction with 3 Time Points")
     
     st.markdown("""
     <div class="info-box">
         <strong>📌 Instructions</strong><br>
-        Enter patient clinical parameters below to predict Gram classification.
+        Enter patient clinical parameters for all three time periods to predict Gram classification.
+        The model captures temporal dynamics across 0-8h (Period 3), 8-16h (Period 2), and 16-24h (Period 1).
     </div>
     """, unsafe_allow_html=True)
     
-    # Create input fields
-    input_values = create_feature_inputs()
+    # 创建三个时间点的标签页
+    timepoint_names = ["Period 3 (0-8h)", "Period 2 (8-16h)", "Period 1 (16-24h)"]
+    tabs = st.tabs([f"🕒 {name}" for name in timepoint_names])
+    
+    # 存储三个时间点的数据
+    timepoint_data = {}
+    
+    # 为每个时间点创建输入表单
+    for idx, (tab, name) in enumerate(zip(tabs, timepoint_names)):
+        with tab:
+            st.markdown(f"### {name}")
+            # 使用不同的默认值来演示时间变化
+            if idx == 0:  # Period 3 (0-8h) - 早期
+                defaults = {
+                    "heart_rate": 85, "sbp": 118, "resp_rate": 18, "spo2": 96,
+                    "wbc": 9.5, "hemoglobin": 13.2, "platelet": 240,
+                    "bun": 16, "pt": 12.5, "glucose": 110,
+                    "sodium": 139, "potassium": 4.1, "chloride": 103, "bicarbonate": 23
+                }
+            elif idx == 1:  # Period 2 (8-16h) - 中期
+                defaults = {
+                    "heart_rate": 92, "sbp": 112, "resp_rate": 21, "spo2": 94,
+                    "wbc": 12.0, "hemoglobin": 12.8, "platelet": 210,
+                    "bun": 20, "pt": 13.5, "glucose": 125,
+                    "sodium": 138, "potassium": 4.3, "chloride": 101, "bicarbonate": 22
+                }
+            else:  # Period 1 (16-24h) - 晚期
+                defaults = {
+                    "heart_rate": 105, "sbp": 105, "resp_rate": 24, "spo2": 92,
+                    "wbc": 15.0, "hemoglobin": 12.0, "platelet": 180,
+                    "bun": 28, "pt": 15.0, "glucose": 145,
+                    "sodium": 136, "potassium": 4.6, "chloride": 99, "bicarbonate": 20
+                }
+            
+            timepoint_data[idx] = create_timepoint_inputs(name, idx, defaults)
+    
+    # 显示数据预览
+    with st.expander("📊 View Entered Data Summary"):
+        for idx, name in enumerate(timepoint_names):
+            st.markdown(f"**{name}**")
+            df_preview = pd.DataFrame([timepoint_data[idx]]).T
+            df_preview.columns = ['Value']
+            st.dataframe(df_preview, use_container_width=True)
     
     # Prediction button
     if st.button("🔍 Predict Gram Classification", use_container_width=True):
         if st.session_state.model_loaded:
-            # Prepare input data
-            input_df = pd.DataFrame([input_values])[st.session_state.feature_cols]
-            
             try:
-                # Get prediction
-                probability = st.session_state.predictor.predict_single(input_df)[0]
+                # 构建3D数组: (1, 3, 14)
+                X_3d_list = []
+                for idx in range(3):
+                    df = pd.DataFrame([timepoint_data[idx]])[st.session_state.feature_cols]
+                    X_3d_list.append(df.values[0])
+                
+                X_3d = np.array(X_3d_list).reshape(1, 3, -1)
+                
+                # 使用 predict_temporal 方法
+                probability = st.session_state.predictor.predict_temporal(X_3d)[0]
                 
                 st.markdown("---")
                 st.subheader("📊 Prediction Result")
@@ -377,7 +446,24 @@ if page == "🎯 Single Prediction":
                 # Display result
                 display_prediction(probability)
                 
-                # Feature importance for this prediction
+                # 显示时间序列趋势
+                st.subheader("📈 Temporal Trends")
+                
+                # 创建趋势图数据
+                trend_data = []
+                for feature in ['wbc', 'heart_rate', 'resp_rate']:
+                    values = [timepoint_data[i][feature] for i in range(3)]
+                    trend_data.append({
+                        'Feature': feature,
+                        'Period 3 (0-8h)': values[0],
+                        'Period 2 (8-16h)': values[1],
+                        'Period 1 (16-24h)': values[2]
+                    })
+                
+                trend_df = pd.DataFrame(trend_data)
+                st.dataframe(trend_df, use_container_width=True)
+                
+                # Feature importance
                 st.subheader("📈 Feature Contributions")
                 importance = st.session_state.predictor.get_feature_importance()
                 if importance:
@@ -409,18 +495,23 @@ elif page == "📊 Batch Prediction":
     st.markdown("""
     <div class="info-box">
         <strong>📌 Instructions</strong><br>
-        Upload a CSV file containing multiple patient records for batch prediction.
-        The file must contain all required features.
+        Upload a CSV file containing patient records for all three time points.
+        The file must contain columns with suffixes: _t1, _t2, _t3 for each feature.
     </div>
     """, unsafe_allow_html=True)
     
     # Template download
-    template_df = pd.DataFrame(columns=st.session_state.feature_cols)
+    template_cols = []
+    for suffix in ['_t1', '_t2', '_t3']:
+        for feat in st.session_state.feature_cols:
+            template_cols.append(f"{feat}{suffix}")
+    
+    template_df = pd.DataFrame(columns=template_cols)
     csv_template = template_df.to_csv(index=False)
     st.download_button(
         label="📥 Download Template CSV",
         data=csv_template,
-        file_name="template.csv",
+        file_name="template_3timepoints.csv",
         mime="text/csv",
         use_container_width=True
     )
@@ -429,7 +520,7 @@ elif page == "📊 Batch Prediction":
     uploaded_file = st.file_uploader(
         "Choose CSV file", 
         type=['csv'],
-        help="File must contain all feature columns"
+        help="File must contain all features with _t1, _t2, _t3 suffixes"
     )
     
     if uploaded_file is not None:
@@ -440,17 +531,27 @@ elif page == "📊 Batch Prediction":
         st.dataframe(data.head(), use_container_width=True)
         
         # Check features
-        missing_cols = set(st.session_state.feature_cols) - set(data.columns)
+        expected_cols = []
+        for suffix in ['_t1', '_t2', '_t3']:
+            for feat in st.session_state.feature_cols:
+                expected_cols.append(f"{feat}{suffix}")
+        
+        missing_cols = set(expected_cols) - set(data.columns)
         if missing_cols:
             st.error(f"❌ Missing columns: {missing_cols}")
         else:
             if st.button("Start Batch Prediction", use_container_width=True):
                 with st.spinner("Processing predictions..."):
-                    # Prepare data
-                    X = data[st.session_state.feature_cols]
+                    # 构建3D数组
+                    n_samples = len(data)
+                    X_3d = np.zeros((n_samples, 3, len(st.session_state.feature_cols)))
+                    
+                    for i, feat in enumerate(st.session_state.feature_cols):
+                        for t_idx, suffix in enumerate(['_t1', '_t2', '_t3']):
+                            X_3d[:, t_idx, i] = data[f"{feat}{suffix}"].values
                     
                     # Predict
-                    probas = st.session_state.predictor.predict_single(X)
+                    probas = st.session_state.predictor.predict_temporal(X_3d)
                     
                     # Create results
                     results = data.copy()
@@ -500,34 +601,44 @@ elif page == "📊 Batch Prediction":
                     )
 
 elif page == "📋 Sample Cases":
-    st.header("📋 Sample Cases")
+    st.header("📋 Sample Cases with Time Series")
     
     st.markdown("""
     <div class="info-box">
         <strong>📌 Sample Cases</strong><br>
-        Explore pre-loaded sample cases to see how the model performs.
+        Explore pre-loaded sample cases with complete 3-timepoint data.
     </div>
     """, unsafe_allow_html=True)
     
-    # Sample cases data
+    # Sample cases data with 3 time points
     sample_cases = {
-        "Typical Gram-positive": {
-            "heart_rate": 110, "sbp": 90, "resp_rate": 24, "spo2": 92,
-            "wbc": 15.5, "hemoglobin": 10.2, "platelet": 150,
-            "bun": 35, "pt": 18, "glucose": 180,
-            "sodium": 135, "potassium": 4.5, "chloride": 100, "bicarbonate": 18
+        "Gram-positive (Worsening)": {
+            "t1": {"heart_rate": 88, "sbp": 115, "resp_rate": 19, "spo2": 95,
+                   "wbc": 10.2, "hemoglobin": 13.0, "platelet": 230,
+                   "bun": 18, "pt": 13.0, "glucose": 115,
+                   "sodium": 138, "potassium": 4.2, "chloride": 102, "bicarbonate": 23},
+            "t2": {"heart_rate": 98, "sbp": 108, "resp_rate": 22, "spo2": 93,
+                   "wbc": 13.5, "hemoglobin": 12.5, "platelet": 195,
+                   "bun": 24, "pt": 14.0, "glucose": 132,
+                   "sodium": 137, "potassium": 4.4, "chloride": 100, "bicarbonate": 21},
+            "t3": {"heart_rate": 112, "sbp": 98, "resp_rate": 26, "spo2": 90,
+                   "wbc": 17.8, "hemoglobin": 11.8, "platelet": 160,
+                   "bun": 32, "pt": 15.5, "glucose": 155,
+                   "sodium": 135, "potassium": 4.7, "chloride": 98, "bicarbonate": 19}
         },
-        "Typical Gram-negative": {
-            "heart_rate": 95, "sbp": 110, "resp_rate": 20, "spo2": 95,
-            "wbc": 8.5, "hemoglobin": 12.5, "platelet": 280,
-            "bun": 22, "pt": 14, "glucose": 140,
-            "sodium": 138, "potassium": 4.0, "chloride": 105, "bicarbonate": 22
-        },
-        "Borderline Case": {
-            "heart_rate": 100, "sbp": 100, "resp_rate": 22, "spo2": 94,
-            "wbc": 11.0, "hemoglobin": 11.5, "platelet": 200,
-            "bun": 28, "pt": 16, "glucose": 160,
-            "sodium": 136, "potassium": 4.2, "chloride": 102, "bicarbonate": 20
+        "Gram-negative (Improving)": {
+            "t1": {"heart_rate": 105, "sbp": 95, "resp_rate": 25, "spo2": 91,
+                   "wbc": 16.5, "hemoglobin": 11.5, "platelet": 165,
+                   "bun": 30, "pt": 15.0, "glucose": 150,
+                   "sodium": 135, "potassium": 4.6, "chloride": 99, "bicarbonate": 20},
+            "t2": {"heart_rate": 95, "sbp": 105, "resp_rate": 21, "spo2": 94,
+                   "wbc": 12.8, "hemoglobin": 12.2, "platelet": 210,
+                   "bun": 24, "pt": 14.0, "glucose": 130,
+                   "sodium": 137, "potassium": 4.3, "chloride": 101, "bicarbonate": 22},
+            "t3": {"heart_rate": 82, "sbp": 118, "resp_rate": 18, "spo2": 97,
+                   "wbc": 9.2, "hemoglobin": 13.0, "platelet": 265,
+                   "bun": 18, "pt": 12.5, "glucose": 108,
+                   "sodium": 139, "potassium": 4.0, "chloride": 103, "bicarbonate": 24}
         }
     }
     
@@ -537,27 +648,24 @@ elif page == "📋 Sample Cases":
     if selected_case:
         case_data = sample_cases[selected_case]
         
-        # Display case data
-        col1, col2 = st.columns(2)
+        # Display time series data
+        timepoint_names = ["Period 3 (0-8h)", "Period 2 (8-16h)", "Period 1 (16-24h)"]
+        tabs = st.tabs([f"📊 {name}" for name in timepoint_names])
         
-        with col1:
-            st.markdown("#### Vital Signs")
-            st.json({k: case_data[k] for k in ["heart_rate", "sbp", "resp_rate", "spo2"]})
-            
-            st.markdown("#### Blood Count")
-            st.json({k: case_data[k] for k in ["wbc", "hemoglobin", "platelet"]})
-        
-        with col2:
-            st.markdown("#### Chemistry")
-            st.json({k: case_data[k] for k in ["bun", "pt", "glucose"]})
-            
-            st.markdown("#### Electrolytes")
-            st.json({k: case_data[k] for k in ["sodium", "potassium", "chloride", "bicarbonate"]})
+        for idx, (tab, name) in enumerate(zip(tabs, timepoint_names)):
+            with tab:
+                st.json({k: v for k, v in case_data[f"t{idx+1}"].items()})
         
         # Predict button
-        if st.button("Run Prediction", use_container_width=True):
-            input_df = pd.DataFrame([case_data])[st.session_state.feature_cols]
-            probability = st.session_state.predictor.predict_single(input_df)[0]
+        if st.button("Run Prediction with Time Series", use_container_width=True):
+            # Build 3D array
+            X_3d_list = []
+            for t_idx in range(3):
+                df = pd.DataFrame([case_data[f"t{t_idx+1}"]])[st.session_state.feature_cols]
+                X_3d_list.append(df.values[0])
+            
+            X_3d = np.array(X_3d_list).reshape(1, 3, -1)
+            probability = st.session_state.predictor.predict_temporal(X_3d)[0]
             
             st.markdown("---")
             st.subheader("Prediction Result")
@@ -575,19 +683,22 @@ else:  # About page
         st.markdown("""
         ### 🦠 Gram Classification System
         
-        **Version**: 1.0.0
+        **Version**: 2.0.0 (with Time Series Support)
         
         **Clinical Application**:
         - Predicts Gram-positive vs Gram-negative classification in sepsis patients with bloodstream infection
+        - Uses **3 time points** (0-8h, 8-16h, 16-24h) to capture temporal dynamics
         - Assists in early antibiotic therapy decision-making
         - Provides interpretable predictions using SHAP values
         
         **Model Features**:
         - **14 Clinical Parameters**: Vital signs, blood count, chemistry, electrolytes
+        - **Time Series Processing**: Extracts mean, std, max, min, median, and trends
         - **Algorithm**: LightGBM with optimized hyperparameters
         - **Performance**: Validated on internal and external datasets
         
         **Key Benefits**:
+        - Captures disease progression through temporal trends
         - Rapid Gram classification within 24 hours
         - No additional cost beyond routine labs
         - Transparent AI with explainable predictions
@@ -600,7 +711,7 @@ else:  # About page
     st.markdown("---")
     
     # Features list
-    st.subheader("📊 Clinical Features")
+    st.subheader("📊 Clinical Features (3 Time Points)")
     
     col1, col2, col3 = st.columns(3)
     
@@ -642,7 +753,7 @@ For questions or collaborations, please contact: lizeqi0726@163.com
 st.markdown("---")
 st.markdown("""
 <div style="text-align: center; color: #6c757d; padding: 1rem;">
-<p>🦠 Gram Classification System | For Research Use Only | Version 1.0.0</p>
+<p>🦠 Gram Classification System | For Research Use Only | Version 2.0.0 (Time Series Support)</p>
 <p style="font-size: 0.8rem;">© 2024 All Rights Reserved</p>
 </div>
 """, unsafe_allow_html=True)
