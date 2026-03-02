@@ -1,4 +1,4 @@
-# streamlit_app.py - 修复版，支持三个时间点，key全局唯一
+# streamlit_app.py - 终极修复版，使用UUID确保key绝对唯一
 
 import streamlit as st
 import pandas as pd
@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 import base64
 from io import BytesIO
+import uuid  # 新增：用于生成唯一ID
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -146,20 +147,6 @@ st.markdown("""
         border-radius: 10px;
         padding: 1rem;
     }
-    
-    /* 时间点标签页样式 */
-    .timepoint-tab {
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-    
-    /* 时间点摘要卡片 */
-    .period-summary {
-        background: #f0f2f6;
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 0.5rem 0;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -235,9 +222,9 @@ feature_descriptions = {
     "bicarbonate": "Bicarbonate (mmol/L)"
 }
 
-# 修复后的函数：为特定时间点创建输入字段，使用全局唯一的key
+# 终极修复版：为特定时间点创建输入字段，使用UUID确保key绝对唯一
 def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
-    """为特定时间点创建输入字段 - 使用全局唯一的key"""
+    """为特定时间点创建输入字段 - 使用UUID确保key绝对唯一"""
     if default_values is None:
         default_values = {
             "heart_rate": 80, "sbp": 120, "resp_rate": 16, "spo2": 98,
@@ -246,9 +233,8 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
             "sodium": 140, "potassium": 4.0, "chloride": 102, "bicarbonate": 24
         }
     
-    # 生成一个简短的时间点标识符，用于key
-    # 将 "Period 3 (0-8h)" 转换为 "Period3_0-8h"
-    period_key = timepoint_name.replace(" ", "_").replace("(", "").replace(")", "")
+    # 为这个函数调用生成一个唯一ID
+    call_id = str(uuid.uuid4())[:8]
     
     col1, col2 = st.columns(2)
     values = {}
@@ -258,25 +244,25 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
         values["heart_rate"] = st.number_input(
             f"Heart Rate (bpm) - {timepoint_name}", 
             min_value=0, max_value=300, value=default_values["heart_rate"], step=1,
-            key=f"hr_{period_key}_{timepoint_idx}",
+            key=f"hr_{timepoint_idx}_{call_id}",
             help=feature_descriptions["heart_rate"]
         )
         values["sbp"] = st.number_input(
             f"SBP (mmHg) - {timepoint_name}", 
             min_value=0, max_value=300, value=default_values["sbp"], step=1,
-            key=f"sbp_{period_key}_{timepoint_idx}",
+            key=f"sbp_{timepoint_idx}_{call_id}",
             help=feature_descriptions["sbp"]
         )
         values["resp_rate"] = st.number_input(
             f"Respiratory Rate (breaths/min) - {timepoint_name}", 
             min_value=0, max_value=100, value=default_values["resp_rate"], step=1,
-            key=f"rr_{period_key}_{timepoint_idx}",
+            key=f"rr_{timepoint_idx}_{call_id}",
             help=feature_descriptions["resp_rate"]
         )
         values["spo2"] = st.number_input(
             f"SpO₂ (%) - {timepoint_name}", 
             min_value=0, max_value=100, value=default_values["spo2"], step=1,
-            key=f"spo2_{period_key}_{timepoint_idx}",
+            key=f"spo2_{timepoint_idx}_{call_id}",
             help=feature_descriptions["spo2"]
         )
         
@@ -284,19 +270,19 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
         values["wbc"] = st.number_input(
             f"WBC (10⁹/L) - {timepoint_name}", 
             min_value=0.0, max_value=100.0, value=default_values["wbc"], step=0.1,
-            key=f"wbc_{period_key}_{timepoint_idx}",
+            key=f"wbc_{timepoint_idx}_{call_id}",
             help=feature_descriptions["wbc"]
         )
         values["hemoglobin"] = st.number_input(
             f"Hemoglobin (g/dL) - {timepoint_name}", 
             min_value=0.0, max_value=20.0, value=default_values["hemoglobin"], step=0.1,
-            key=f"hgb_{period_key}_{timepoint_idx}",
+            key=f"hgb_{timepoint_idx}_{call_id}",
             help=feature_descriptions["hemoglobin"]
         )
         values["platelet"] = st.number_input(
             f"Platelet (10⁹/L) - {timepoint_name}", 
             min_value=0, max_value=1000, value=default_values["platelet"], step=1,
-            key=f"plt_{period_key}_{timepoint_idx}",
+            key=f"plt_{timepoint_idx}_{call_id}",
             help=feature_descriptions["platelet"]
         )
     
@@ -305,19 +291,19 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
         values["bun"] = st.number_input(
             f"BUN (mg/dL) - {timepoint_name}", 
             min_value=0.0, max_value=100.0, value=default_values["bun"], step=0.1,
-            key=f"bun_{period_key}_{timepoint_idx}",
+            key=f"bun_{timepoint_idx}_{call_id}",
             help=feature_descriptions["bun"]
         )
         values["pt"] = st.number_input(
             f"PT (seconds) - {timepoint_name}", 
             min_value=0.0, max_value=100.0, value=default_values["pt"], step=0.1,
-            key=f"pt_{period_key}_{timepoint_idx}",
+            key=f"pt_{timepoint_idx}_{call_id}",
             help=feature_descriptions["pt"]
         )
         values["glucose"] = st.number_input(
             f"Glucose (mg/dL) - {timepoint_name}", 
             min_value=0, max_value=500, value=default_values["glucose"], step=1,
-            key=f"glu_{period_key}_{timepoint_idx}",
+            key=f"glu_{timepoint_idx}_{call_id}",
             help=feature_descriptions["glucose"]
         )
         
@@ -325,25 +311,25 @@ def create_timepoint_inputs(timepoint_name, timepoint_idx, default_values=None):
         values["sodium"] = st.number_input(
             f"Sodium (mmol/L) - {timepoint_name}", 
             min_value=100, max_value=160, value=default_values["sodium"], step=1,
-            key=f"na_{period_key}_{timepoint_idx}",
+            key=f"na_{timepoint_idx}_{call_id}",
             help=feature_descriptions["sodium"]
         )
         values["potassium"] = st.number_input(
             f"Potassium (mmol/L) - {timepoint_name}", 
             min_value=2.0, max_value=8.0, value=default_values["potassium"], step=0.1,
-            key=f"k_{period_key}_{timepoint_idx}",
+            key=f"k_{timepoint_idx}_{call_id}",
             help=feature_descriptions["potassium"]
         )
         values["chloride"] = st.number_input(
             f"Chloride (mmol/L) - {timepoint_name}", 
             min_value=80, max_value=120, value=default_values["chloride"], step=1,
-            key=f"cl_{period_key}_{timepoint_idx}",
+            key=f"cl_{timepoint_idx}_{call_id}",
             help=feature_descriptions["chloride"]
         )
         values["bicarbonate"] = st.number_input(
             f"Bicarbonate (mmol/L) - {timepoint_name}", 
             min_value=10, max_value=40, value=default_values["bicarbonate"], step=1,
-            key=f"hco3_{period_key}_{timepoint_idx}",
+            key=f"hco3_{timepoint_idx}_{call_id}",
             help=feature_descriptions["bicarbonate"]
         )
     
@@ -425,9 +411,10 @@ if page == "🎯 Single Patient (3 Time Points)":
     with st.expander("📊 View Entered Data Summary"):
         for idx, name in enumerate(timepoint_names):
             st.markdown(f"**{name}**")
-            df_preview = pd.DataFrame([timepoint_data[idx]]).T
-            df_preview.columns = ['Value']
-            st.dataframe(df_preview, use_container_width=True)
+            if idx in timepoint_data:
+                df_preview = pd.DataFrame([timepoint_data[idx]]).T
+                df_preview.columns = ['Value']
+                st.dataframe(df_preview, use_container_width=True)
     
     # Prediction button
     if st.button("🔍 Predict Gram Classification", use_container_width=True):
@@ -436,8 +423,12 @@ if page == "🎯 Single Patient (3 Time Points)":
                 # 构建3D数组: (1, 3, 14)
                 X_3d_list = []
                 for idx in range(3):
-                    df = pd.DataFrame([timepoint_data[idx]])[st.session_state.feature_cols]
-                    X_3d_list.append(df.values[0])
+                    if idx in timepoint_data:
+                        df = pd.DataFrame([timepoint_data[idx]])[st.session_state.feature_cols]
+                        X_3d_list.append(df.values[0])
+                    else:
+                        st.error(f"Missing data for {timepoint_names[idx]}")
+                        st.stop()
                 
                 X_3d = np.array(X_3d_list).reshape(1, 3, -1)
                 
@@ -756,11 +747,11 @@ else:  # About page
     ### 📝 Citation
     
     If you use this tool in your research, please cite:
-    @software{gram_classification_2026,
+    @software{gram_classification_2024,
 title = {Gram Classification System for Sepsis with Bloodstream Infection},
 author = {Li Zeqi},
-year = {2026},
-url = {https://www.sepsis-bsi-gram.cn}
+year = {2024},
+url = {https://sepsis-gram-classification.streamlit.app}
 }
 
 ### 📧 Contact
