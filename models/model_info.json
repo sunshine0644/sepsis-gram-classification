@@ -1,0 +1,11 @@
+{
+  "features": [
+    "pt",
+    "platelet",
+    "hemoglobin",
+    "bicarbonate",
+    "resp_rate"
+  ],
+  "n_features": 5,
+  "threshold": 0.8763836712912374
+}

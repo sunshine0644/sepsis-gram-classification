@@ -1,0 +1,11 @@
+{
+  "features": [
+    "pt",
+    "platelet",
+    "hemoglobin",
+    "bicarbonate",
+    "resp_rate"
+  ],
+  "n_features": 5,
+  "version": "v5.3_native"
+}
