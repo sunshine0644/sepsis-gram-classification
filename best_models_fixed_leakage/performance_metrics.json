@@ -1,8 +1,7 @@
 {
-  "model_version": "v5.3_native",
-  "n_features": 5,
-  "AUROC": "0.970",
-  "AUPRC": "0.989",
-  "Threshold": 0.876,
-  "CV_AUROC": "0.972\u00b10.010"
+  "Internal_AUROC": "0.969",
+  "External_AUROC": "0.975",
+  "Internal_AUPRC": "0.989",
+  "External_AUPRC": "0.974",
+  "Threshold": 0.5
 }
