@@ -11,13 +11,13 @@ https://www.sepsis-bsi-gram.cn
 - **Algorithm**: LightGBM
 - **Features**: 5 key parameters (PT, platelet, hemoglobin, bicarbonate, respiratory rate)
 - **Time windows**: 3 × 8-hour windows before blood culture collection
-- **Training**: MIMIC-IV (n = 1,403) | External validation: 101 patients
+- **Training**: MIMIC-IV (n = 1,123) | External validation: 101 patients (independent single-center cohort)
 
 ### Performance
 
 | Metric | Internal Test | External Validation |
 |--------|:------------:|:-------------------:|
-| AUROC | 0.970 | 0.962 |
+| AUROC | 0.969 (0.952–0.984) | 0.975 (0.948–0.994) |
 | AUPRC | 0.989 | 0.968 |
 
 ## Project Structure
