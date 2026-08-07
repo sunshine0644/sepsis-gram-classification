@@ -1,11 +1,11 @@
 {
   "features": [
     "pt",
+    "bicarbonate",
     "platelet",
     "hemoglobin",
-    "bicarbonate",
-    "resp_rate"
+    "sbp"
   ],
   "n_features": 5,
-  "version": "v5.3_native"
+  "version": "v6.0_smote"
 }

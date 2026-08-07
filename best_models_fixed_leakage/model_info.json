@@ -1,11 +1,15 @@
 {
+  "model_type": "LightGBM",
+  "n_estimators": 200,
+  "max_depth": 7,
+  "learning_rate": 0.05,
+  "class_weight": "balanced",
+  "threshold": 0.5,
   "features": [
     "pt",
+    "bicarbonate",
     "platelet",
     "hemoglobin",
-    "bicarbonate",
-    "resp_rate"
-  ],
-  "n_features": 5,
-  "threshold": 0.8763836712912374
+    "sbp"
+  ]
 }
