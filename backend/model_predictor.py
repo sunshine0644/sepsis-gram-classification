@@ -18,11 +18,13 @@ class SepsisPredictor:
         # Load model
         self.model = joblib.load(str(self.model_dir / "LightGBM_model.pkl"))
 
-        # Load preprocessor
-        self.preprocessor = joblib.load(str(self.model_dir / "LightGBM_preprocessor.pkl"))
+        # Load preprocessor metadata (JSON format)
+        with open(self.model_dir / "preprocessor.json", 'r') as f:
+            self.preprocessor = json.load(f)
 
-        # Load threshold
-        self.threshold = float(joblib.load(str(self.model_dir / "LightGBM_threshold.pkl")))
+        # Load threshold (JSON format)
+        with open(self.model_dir / "threshold.json", 'r') as f:
+            self.threshold = float(json.load(f)['threshold'])
 
         # Load scaler
         self.scaler = joblib.load(str(self.model_dir / "scaler.pkl"))
